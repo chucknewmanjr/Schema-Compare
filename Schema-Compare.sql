@@ -8,19 +8,31 @@
 	Or you can execute it to make a temp table that's ready for a comparison.
 	If this script returns 2 resultsets then the first resultset is the results of a comparison.
 
-	EXAMPLE
+	--- EXAMPLE ---
+	Compare dev to QA
 	1 - Run this script in QA. One resultset is returned. That's the schema snapshot.
 	2 - Copy the results into a new query window in dev and run it. This creates a temp table.
 	3 - Run this script in dev without closing the other query window. 
 	    This time, 2 resultsets are returned. The first is the results of the comparison.
+
+	--- COLUMNS ---
+	The results of the comparison contain 5 columns
+	1 - Result - Which snapshot the item is in. The comparison results 
+	    are from running this script in the target.
+	2 - Item - The name of the object, column, index or someother thing. 
+	    If the item is in another object, then that is included.
+	3 - Property_Type - The type of item or a more specific detail.
+	4 & 5 - Source & Target_Properties - More details about the item.
 */
 
 if DB_NAME() = 'master' throw 50000, 'Dont run on master', 1;
 go
 
-declare @Schema_List table ([schema_id] int)
+set nocount on;
 
-insert @Schema_List select [schema_id] from sys.schemas where [name] not in ('Tools', 'sys')
+declare @Schema_List table ([schema_id] int);
+
+insert @Schema_List select [schema_id] from sys.schemas where [name] not in ('Tools', 'sys');
 
 declare @Schema_Data table (
 	Item nvarchar(200) not null, -- 200 -- Not including Parent. Typically has a prefix similar to Property_Type. Prefix depends on if parent is blank.
@@ -31,9 +43,11 @@ declare @Schema_Data table (
 
 -- What are we comparing?
 insert @Schema_Data values 
-	('! Server', '', 'Snapshot', @@SERVERNAME), 
-	('! Database', '', 'Snapshot', DB_NAME()), 
-	('! Time', '', 'Snapshot', FORMAT(SYSDATETIMEOFFSET(), 'yyyy-M-d h-mm tt zzz'));
+	(' ! Server', '', 'Snapshot', @@SERVERNAME), 
+	(' ! Database', '', 'Snapshot', DB_NAME()), 
+	(' ! Local Time', '', 'Snapshot', FORMAT(SYSDATETIME(), 'yyyy-MMM-d h:mmtt')), 
+	(' ! UTC Time', '', 'Snapshot', FORMAT(SYSUTCDATETIME(), 'yyyy-MMM-d h:mmtt')), 
+	(' ! Time Zone', '', 'Snapshot', CAST(DATEDIFF(hour, SYSUTCDATETIME(), SYSDATETIME()) as varchar));
 
 -- miscellaneous objects
 insert @Schema_Data (Item, Property_Type)
@@ -106,11 +120,7 @@ where c.[type] = 'PK'
 	and c.is_ms_shipped = 0
 
 	and (o.[name] not like '%diagram%' or o.[schema_id] <> SCHEMA_ID('dbo')) -- Exclude diagrams
-order by 1
-
-
-
-
+order by 1;
 
 insert @Schema_Data
 select 
@@ -232,9 +242,9 @@ where name <> 'guid'
 
 insert @Schema_Data (Item, Property_Type, Properties)
 select 'Filegroup ' + [name], 'Filegroup', [type_desc]
-from sys.data_spaces
+from sys.data_spaces;
 
-if OBJECT_ID('tempdb.dbo.##Schema_Snapshot') is not null begin
+if OBJECT_ID('tempdb.dbo.##Schema_Snapshot') is not null begin;
 	declare @source table (Item nvarchar(500), Parent nvarchar(500), Property_Type sysname, Properties nvarchar(500));
 
 	declare @target table (Item nvarchar(500), Parent nvarchar(500), Property_Type sysname, Properties nvarchar(500));
@@ -276,7 +286,7 @@ if OBJECT_ID('tempdb.dbo.##Schema_Snapshot') is not null begin
 		or ISNULL(s.Property_Type, '') <> ISNULL(t.Property_Type, '')
 		or ISNULL(s.Properties, '') <> ISNULL(t.Properties, '')
 	order by 2, 3, 4, 1;
-end
+end;
 
 declare @Output_Work table (Row_Num int identity, Section int, Line nvarchar(2000));
 
@@ -289,26 +299,18 @@ update @Output_Work
 set Line = '/*' + CAST(Row_Num / 1000 as varchar) + '*/ insert ##Schema_Snapshot values ' + STUFF(Line, 1, 1, '') 
 where Row_Num % 1000 = 1;
 
+declare @SuggestedFilename varchar(MAX) = '-- Suggested file name: snapshot-' + @@SERVERNAME + '-' + DB_NAME() + '-' + FORMAT(SYSUTCDATETIME(), 'yyyyMMdd') + '.sql';
+
 insert @Output_Work
 values
+	(5, @SuggestedFilename), 
 	(10, 'drop table if exists ##Schema_Snapshot;'), 
 	(15, 'create table ##Schema_Snapshot (Item nvarchar(200), Parent nvarchar(500), Property_Type sysname, Properties nvarchar(500));'), 
-	(30, 'print ''The ##Schema_Snapshot temp table is ready for a comparison. Once you close this script, the table will go away.'';')
-;
+	(30, 'print ''The ##Schema_Snapshot temp table is ready for a comparison. Once you close this script, the table will go away.'';'),
+	(35, @SuggestedFilename);
 
 with t as(select 0y,CAST(value as int)q,0r from STRING_SPLIT(REPLACE(REPLACE('45,90-2430,5103,405,783,2610,7377,22160,44560,13395,5193,270,567,3645\90-2475,5193-2430\63,405,810,2475,7377,22160,44560,13395,4950,1485,567,45,90-2430,5103','-',',270,810,2430\90,270,810,'),'\',',4860,1620,540,180,'),',')union all select y+1,q/3,q%3 from t where y<10)
 insert @Output_Work
 select 40,'--  '+REPLACE(REPLACE((select char(r+46)from t where y=u.y for xml path('')),'.',' '),'0','\')from t u group by y;
 
 select Line as [--Schema_Snapshot] from @Output_Work order by Section, Row_Num;
-
---                    /\                                          /\                  
---                   /  \                                        /  \                 
---      /\      /\  / /\ \  /\      /\      /\  /\      /\      / /\ \      /\      /\
---     /  \    / / / / / /  \ \    /  \    / / /  \    /  \    / / /  \    /  \    / /
---    / /\ \  / / / / / / /\ \ \  / /\ \  / / / /\ \  / /\ \  / / / /\ \  / /\ \  / / 
---   / /  \ \/ /  \ \/ / / /  \ \/ /  \ \/ / / /  \ \/ /  \ \ \/ / / / / / /  \ \/ /  
---  / /    \  /    \  / / /    \  /    \  / / /    \  /    \ \  / / / / / /    \  /   
---  \/      \/      \ \/ /      \/      \/  \/      \/      \/  \ \/ /  \/      \/    
---                   \  /                                        \  /                 
---                    \/                                          \/                  
