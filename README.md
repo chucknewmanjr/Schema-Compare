@@ -14,7 +14,7 @@ You can copy those results into its own query window and save it for later.
 Or you can execute it in another server to make a temp table that's ready for a comparison.
 If this script returns 2 resultsets then:
 
-1. The first resultset is the results of a comparison and 
+1. The first resultset is the comparison and 
 1. The second resultset is the schema snapshot.
 
 # INSTRUCTIONS - SEEING WHAT CHANGED
@@ -37,8 +37,8 @@ Let's say QA is only available through RDP. In that case, you might have SSMS ru
 # COMPARISON RESULTS COLUMNS
 The results of the comparison contain 5 columns
 
-1. Result - Which snapshot the item is in. The comparison results are from running this script in the target.
-1. Item - The name of the object, column, index or someother thing. If the item is in another object, then that is included.
-1. Property_Type - The type of item or a more specific detail.
-1. Source_Properties - More details about the source item.
-1. Target_Properties - More details about the target item.
+1. **Result** - Which snapshot the item is in. The comparison results are from running this script in the target.
+1. **Item** - The name of the object, column, index or someother thing. If the item is in another object, then that is included.
+1. **Property_Type** - The type of item or a more specific detail.
+1. **Source_Properties** - More details about the source item.
+1. **Target_Properties** - More details about the target item.
