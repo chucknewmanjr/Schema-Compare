@@ -17,23 +17,28 @@ If this script returns 2 resultsets then:
 1. The first resultset is the results of a comparison and 
 1. The second resultset is the schema snapshot.
 
-# EXAMPLE - 
+# INSTRUCTIONS - SEEING WHAT CHANGED
+Let's say you want to see DDL changes are made in the development database after today.
 
-	--- EXAMPLE ---
-	Compare dev to QA
-	1 - Run this script in QA. One resultset is returned. That's the schema snapshot.
-	2 - Copy the results into a new query window in dev and run it. This creates a temp table.
-	3 - Run this script in dev without closing the other query window. 
-	    This time, 2 resultsets are returned. The first is the results of the comparison.
-      
-      
+1. Run the Schema-Compare.sql script on the development database. One resultset is returned. That's the schema snapshot.
+1. Copy the results into a new query window. If you look carefully, you'll see a suggested file name.
+1. Save the results for later. The file name extention should be "sql".
+1. On some later date, run the schema snapshot script on the development database. This creates a global temp table. Don't close the window or the table will go away.
+1. Run the Schema-Compare.sql script on the development database. The first resultset is the comparison results.
+
+# INSTRUCTIONS - COMPARING DEV TO QA
+Let's say QA is only available through RDP. In that case, you might have SSMS running locally for DEV and SSMS running in the remote desktop for QA.
+
+1. Run the Schema-Compare.sql script on the development database. One resultset is returned. That's the schema snapshot.
+1. Copy the results into a new query window in the remote desktop.
+1. Run the schema snapshot script on the QA database. This creates a global temp table. Don't close the window or the table will go away.
+1. Run the Schema-Compare.sql script on the QA database in the remote desktop. The first resultset is the comparison results.
+
 # COMPARISON RESULTS COLUMNS
 The results of the comparison contain 5 columns
 
-1. Result - Which snapshot the item is in. The comparison results 
-are from running this script in the target.
-1. Item - The name of the object, column, index or someother thing. 
-If the item is in another object, then that is included.
+1. Result - Which snapshot the item is in. The comparison results are from running this script in the target.
+1. Item - The name of the object, column, index or someother thing. If the item is in another object, then that is included.
 1. Property_Type - The type of item or a more specific detail.
 1. Source_Properties - More details about the source item.
 1. Target_Properties - More details about the target item.
