@@ -17,7 +17,7 @@ If this script returns 2 resultsets then:
 1. The first resultset is the comparison and 
 1. The second resultset is the schema snapshot.
 
-# INSTRUCTIONS - SEEING WHAT CHANGED
+# Instructions - Seeing What Changed
 Let's say you want to see DDL changes are made in the development database after today.
 
 1. Run the Schema-Compare.sql script on the development database. One resultset is returned. That's the schema snapshot.
@@ -26,7 +26,7 @@ Let's say you want to see DDL changes are made in the development database after
 1. On some later date, run the schema snapshot script on the development database. This creates a global temp table. Don't close the window or the table will go away.
 1. Run the Schema-Compare.sql script on the development database. The first resultset is the comparison results.
 
-# INSTRUCTIONS - COMPARING DEV TO QA
+# Instructions - Comparing Dev to QA
 Let's say QA is only available through RDP. In that case, you might have SSMS running locally for DEV and SSMS running in the remote desktop for QA.
 
 1. Run the Schema-Compare.sql script on the development database. One resultset is returned. That's the schema snapshot.
@@ -34,7 +34,7 @@ Let's say QA is only available through RDP. In that case, you might have SSMS ru
 1. Run the schema snapshot script on the QA database. This creates a global temp table. Don't close the window or the table will go away.
 1. Run the Schema-Compare.sql script on the QA database in the remote desktop. The first resultset is the comparison results.
 
-# COMPARISON RESULTS COLUMNS
+# Comparison Results Columns
 The results of the comparison contain 5 columns
 
 1. **Result** - Which snapshot the item is in. The comparison results are from running this script in the target.
